@@ -4,67 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Juego del Ahorcado</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-    <script src="scrip.js"></script>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; }
-        .word { font-size: 24px; letter-spacing: 5px; }
-        .letters button { margin: 5px; padding: 10px; }
-        .message { font-size: 20px; font-weight: bold; margin-top: 20px; }
-        #startButton, #restartButton { padding: 10px 20px; font-size: 18px; cursor: pointer; }
-        #gameArea { display: none; }
-        #startArea { display: block; }
-        #restartButton { display: none; }
-    </style>
-</head>
-<body>
-    <h1>Juego del Ahorcado</h1>
+    <script type="module">
+        // Importar módulos de Firebase (para Firebase 9+)
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-    <div id="startArea">
-        <p>Bienvenido al juego del ahorcado. ¿Estás listo para comenzar?</p>
-        <label for="username">Nombre de usuario:</label>
-        <input type="text" id="username" placeholder="Ingresa tu nombre">
-        <button id="registerButton">Registrar e Iniciar</button>
-    </div>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyB_l-1oJlZl6vT818fxaNVVUVuO4G6jpYI",
+            authDomain: "juego-747e1.firebaseapp.com",
+            projectId: "juego-747e1",
+            storageBucket: "juego-747e1.appspot.com",
+            messagingSenderId: "562456925140",
+            appId: "1:562456925140:web:cf02a0a252377b3b7b3c41"
+        };
 
-    <div id="gameArea">
-        <p class="word" id="wordDisplay"></p>
-        <div class="letters" id="letters"></div>
-        <p>Intentos restantes: <span id="attempts">6</span></p>
-        <p class="message" id="message"></p>
-        <h3>Puntuación: <span id="score">0</span></h3>
-        <h3>Ganadas: <span id="wins">0</span> | Perdidas: <span id="losses">0</span></h3>
-        <button id="restartButton">Reiniciar Juego</button>
-    </div>
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-    <script>
+        // Variables globales
+        let username;
         const words = ["javascript", "html", "css", "ahorcado", "programacion"];
-        let selectedWord, guessedWord, attempts, username;
-        let wins = 0, losses = 0;
-        let gameOver = false;
+        let selectedWord, guessedWord, attempts, wins = 0, losses = 0, gameOver = false;
 
-        document.getElementById("registerButton").addEventListener("click", function() {
-            username = document.getElementById("username").value.trim();
-            if (username === "") {
-                alert("Por favor ingresa un nombre de usuario.");
-                return;
-            }
-            
-            console.log("Registrando usuario...");
-            db.collection("players").doc(username).set({
-                wins: 0,
-                losses: 0
-            }, { merge: true }).then(() => {
-                console.log("Usuario registrado en Firebase");
-                document.getElementById("startArea").style.display = "none";
-                document.getElementById("gameArea").style.display = "block";
-                startGame();
-            }).catch(error => console.error("Error al registrar usuario: ", error));
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("registerButton").addEventListener("click", async function() {
+                username = document.getElementById("username").value.trim();
+                if (username === "") {
+                    alert("Por favor ingresa un nombre de usuario.");
+                    return;
+                }
+
+                try {
+                    // Guardar en Firestore
+                    await addDoc(collection(db, "usuarios"), { nombre: username, puntuacion: 0 });
+                    console.log("Usuario registrado:", username);
+
+                    // Mostrar botón de inicio del juego
+                    document.getElementById("startButton").style.display = "inline";
+                    document.getElementById("registerButton").style.display = "none";
+                } catch (error) {
+                    console.error("Error al registrar usuario:", error);
+                }
+            });
+
+            document.getElementById("startButton").addEventListener("click", startGame);
+            document.getElementById("restartButton").addEventListener("click", restartGame);
         });
 
         function startGame() {
-            console.log("Iniciando juego...");
             selectedWord = words[Math.floor(Math.random() * words.length)];
             guessedWord = Array(selectedWord.length).fill("_");
             attempts = 6;
@@ -73,7 +62,8 @@
             document.getElementById("wordDisplay").textContent = guessedWord.join(" ");
             document.getElementById("attempts").textContent = attempts;
             document.getElementById("message").textContent = "";
-
+            document.getElementById("startArea").style.display = "none";
+            document.getElementById("gameArea").style.display = "block";
             document.getElementById("restartButton").style.display = "none";
 
             createButtons();
@@ -137,8 +127,38 @@
             gameOver = false;
             startGame();
         }
-
-        document.getElementById("restartButton").addEventListener("click", restartGame);
     </script>
+
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        .word { font-size: 24px; letter-spacing: 5px; }
+        .letters button { margin: 5px; padding: 10px; }
+        .message { font-size: 20px; font-weight: bold; margin-top: 20px; }
+        #startButton, #restartButton { padding: 10px 20px; font-size: 18px; cursor: pointer; }
+        #gameArea { display: none; }
+        #startArea { display: block; }
+        #restartButton { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Juego del Ahorcado</h1>
+
+    <div id="startArea">
+        <p>Bienvenido al juego del ahorcado. ¿Estás listo para comenzar?</p>
+        <label for="username">Nombre de usuario:</label>
+        <input type="text" id="username" placeholder="Ingresa tu nombre">
+        <button id="registerButton">Registrar</button>
+        <button id="startButton" style="display: none;">Iniciar Juego</button>
+    </div>
+
+    <div id="gameArea">
+        <p class="word" id="wordDisplay"></p>
+        <div class="letters" id="letters"></div>
+        <p>Intentos restantes: <span id="attempts">6</span></p>
+        <p class="message" id="message"></p>
+        <h3>Puntuación: <span id="score">0</span></h3>
+        <h3>Ganadas: <span id="wins">0</span> | Perdidas: <span id="losses">0</span></h3>
+        <button id="restartButton">Reiniciar Juego</button>
+    </div>
 </body>
 </html>
