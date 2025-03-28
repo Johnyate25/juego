@@ -25,8 +25,7 @@
         <p>Bienvenido al juego del ahorcado. ¿Estás listo para comenzar?</p>
         <label for="username">Nombre de usuario:</label>
         <input type="text" id="username" placeholder="Ingresa tu nombre">
-        <button id="registerButton">Registrar</button>
-        <button id="startButton" style="display: none;">Iniciar Juego</button>
+        <button id="registerButton">Registrar e Iniciar</button>
     </div>
 
     <div id="gameArea">
@@ -51,11 +50,21 @@
                 alert("Por favor ingresa un nombre de usuario.");
                 return;
             }
-            document.getElementById("startButton").style.display = "inline";
-            document.getElementById("registerButton").style.display = "none";
+            
+            console.log("Registrando usuario...");
+            db.collection("players").doc(username).set({
+                wins: 0,
+                losses: 0
+            }, { merge: true }).then(() => {
+                console.log("Usuario registrado en Firebase");
+                document.getElementById("startArea").style.display = "none";
+                document.getElementById("gameArea").style.display = "block";
+                startGame();
+            }).catch(error => console.error("Error al registrar usuario: ", error));
         });
 
         function startGame() {
+            console.log("Iniciando juego...");
             selectedWord = words[Math.floor(Math.random() * words.length)];
             guessedWord = Array(selectedWord.length).fill("_");
             attempts = 6;
@@ -65,8 +74,6 @@
             document.getElementById("attempts").textContent = attempts;
             document.getElementById("message").textContent = "";
 
-            document.getElementById("startArea").style.display = "none";
-            document.getElementById("gameArea").style.display = "block";
             document.getElementById("restartButton").style.display = "none";
 
             createButtons();
@@ -131,7 +138,6 @@
             startGame();
         }
 
-        document.getElementById("startButton").addEventListener("click", startGame);
         document.getElementById("restartButton").addEventListener("click", restartGame);
     </script>
 </body>
